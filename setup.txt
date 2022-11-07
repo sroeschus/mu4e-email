@@ -1,0 +1,135 @@
+sudo bkuptool restore --host dev1180.prn1.facebook.com
+
+fbclone linux
+fbclone fbsource
+fbclone opsfiles
+
+# kernel
+sudo dnf install openssl-devel
+sudo dnf install ag
+
+# Virtualization
+sudo dnf install fb-qemu
+cd virtme
+sudo /bin/python3 setup.py install
+
+# Neovim
+sudo dnf install neovim
+
+# Emacs
+sudo dnf install -y \
+    jansson-devel \
+    mpfr-devel \
+    libmpc-devel \
+    gmp-devel \
+    libgccjit-devel \
+    autoconf \
+    texinfo \
+    libX11-devel \
+    jansson \
+    jansson-devel \
+    libXpm \
+    libXaw-devel \
+    libpng-devel \
+    giflib-devel \
+    libtiff-devel \
+    gnutls-devel \
+    ncurses-devel \
+    gtk3-devel \
+    webkit2gtk3-devel
+sudo dnf install libjpeg-devel
+
+git clone https://github.com/emacs-mirror/emacs.git
+cd emacs
+git checkout emacs-28
+make clean
+./autogen.sh
+
+export PKG_CONFIG=/usr/bin/pkg-config
+./configure \
+    --with-dbus \
+    --with-gif \
+    --with-jpeg \
+    --with-png \
+    --with-rsvg \
+    --with-tiff \
+    --with-xft \
+    --with-xpm \
+    --with-gpm=no \
+    --with-modules \
+    --with-native-compilation \
+    --with-pgtk \
+    --with-threads \
+    --with-included-regex
+make -j 8
+src/emacs -Q
+sudo make install
+
+mv .emacs.d .emacs.d.save
+mv .doom.d .doom.d.save
+git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.emacs.d
+with-proxy ~/.emacs.d/bin/doom install
+copy .doom.d files over
+mkdir .doom.d/lisp
+cp .domm.d.save/lisp/formatp.el .doom.d/lisp
+
+sudo dnf -y install cmake
+sudo dnf install libtool
+
+# Email
+sudo dnf install -y isync
+sudo dnf install -y socat
+sudo feature install ttls_fwdproxy
+./start_email_proxy.sh
+
+cd src/mu4e
+sudo dnf install gmime30-devel
+sudo dnf install -y xapian-core xapian-core-devel
+make distclean
+./configure
+make
+sudo make install
+mkdir /home/shr/.emacs.d/.local/state
+
+edit ~/.emacs.d/.local/straight/build-28.2.50/evil-collection/modes/mu4e/evil-collection-mu4e.el
+change mu4e--server-props to mu4e~server-props
+
+==========================
+Additional things to consider:
+
+0) Create Maildir
+    mkdir ~/Maildir
+1) openssl s_client -connect imap.fastmail.com:993 -showcerts 2>&1 < /dev/null  head -n 27 > .fastmail.crt
+2) install software
+    dnf install isync msmtp
+2) install mu
+    dnf install gmime30-devel xapian-core-devel
+3) download tar file
+4) extract tar file
+5) autogen.sh
+6) make
+7) make install
+8) mu init --maildir=~/Maildir --my-address=jim@example.com
+3) mu index
+4) mu find hello
+5) install socat
+6) start socat file
+7) create .mbsyncrc file
+8) generate password keys
+gpg --full-generate-key
+gpg --symmetric .mbsync-pw
+gpg -q --for-your-eyes-only --no-tty -d ~/.mbsync-pw.pgp
+9) get mails
+    mbsync -a
+10) Set directory for attachements
+   export XDG_DOWNLOAD_DIR=~/Maildir/Attachments
+11) create .msmtprc
+12) modify init.el
+13) modify config.el
+14) doom sync
+15) restart emacs bb
+
+openssl s_client -connect imap.fastmail.com:993 -showcerts 2>&1 < /dev/null > fm3.crt
+
+Restart gpg-agent
+   gpgconf --kill gpg-agent
